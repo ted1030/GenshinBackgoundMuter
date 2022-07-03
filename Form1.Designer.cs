@@ -127,5 +127,5 @@
 		private ToolStripMenuItem 離開ToolStripMenuItem;
 		private ToolStripMenuItem 啟用ToolStripMenuItem;
 		private CheckedListBox checkedListBox1;
-	}
+    }
 }

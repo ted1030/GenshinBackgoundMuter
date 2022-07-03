@@ -1,47 +1,48 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
-using AudioSwitcher.AudioApi;
-using AudioSwitcher.AudioApi.CoreAudio;
-//using NAudio.CoreAudioApi;
-//using NAudio.CoreAudioApi.Interfaces;
+//using AudioSwitcher.AudioApi;
+//using AudioSwitcher.AudioApi.CoreAudio;
+//using System.Xml.Linq;
+using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 
 namespace BGMuter
 {
 	public partial class Form1 : Form
 	{
-		//class NotificationClient : IMMNotificationClient
-		//{
-		//	Form1 form;
-		//	public NotificationClient(Form1 form1)
-		//	{
-		//		form = form1;
-		//	}
-		//	void IMMNotificationClient.OnDeviceStateChanged(string deviceId, DeviceState newState) { }
-		//	void IMMNotificationClient.OnDeviceAdded(string pwstrDeviceId) { }
-		//	void IMMNotificationClient.OnDeviceRemoved(string deviceId) { }
-		//	void IMMNotificationClient.OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
-		//	void IMMNotificationClient.OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
-		//	{
-		//		if (defaultDeviceId != null)
-		//			form.SetMute();
-		//	}
-		//}
-
-		class Observer : IObserver<DeviceChangedArgs>
+		class NotificationClient : IMMNotificationClient
 		{
 			Form1 form;
-			public Observer(Form1 form1)
+			public NotificationClient(Form1 form1)
 			{
 				form = form1;
 			}
-			public void OnCompleted() { }
-			public void OnError(Exception error) { }
-			public void OnNext(DeviceChangedArgs value)
+			void IMMNotificationClient.OnDeviceStateChanged(string deviceId, DeviceState newState) { }
+			void IMMNotificationClient.OnDeviceAdded(string pwstrDeviceId) { }
+			void IMMNotificationClient.OnDeviceRemoved(string deviceId) { }
+			void IMMNotificationClient.OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
+			void IMMNotificationClient.OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
 			{
-				form.SetMute();
+				//if (defaultDeviceId != null)
+					form.MuteSession();
 			}
 		}
+
+		//class Observer : IObserver<DeviceChangedArgs>
+		//{
+		//	Form1 form;
+		//	public Observer(Form1 form1)
+		//	{
+		//		form = form1;
+		//	}
+		//	public void OnCompleted() { }
+		//	public void OnError(Exception error) { }
+		//	public void OnNext(DeviceChangedArgs value)
+		//	{
+		//		form.SetMute();
+		//	}
+		//}
 
 		[DllImport("user32.dll", SetLastError = true)]
 		static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc,
@@ -58,45 +59,44 @@ namespace BGMuter
 			uint dwmsEventTime); // delegate: function pointer
 		const uint EVENT_SYSTEM_FOREGROUND = 3;
 		const uint WINEVENT_OUTOFCONTEXT = 0;
-		//static MMDeviceEnumerator audio = new();
-		//NotificationClient? client;
-		static CoreAudioController audio = new();
-		Observer? observer;
+		static MMDeviceEnumerator audio = new();
+		NotificationClient? client;
+		//static CoreAudioController audio = new();
+		//Observer? observer;
+		bool background = false;
 		IntPtr handle;
 		IntPtr eventhook;
 		GCHandle gch;
 		RegistryKey? reg = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
 
-		void MuteSession(bool mute)
-		{
-			handle = FindWindow(null, "原神");
-			if (GetWindowThreadProcessId(handle, out int pid) != 0) 
-			{
-				bool unchanged = true;
-				while (unchanged)
-					audio.GetDevices(DeviceType.Playback, DeviceState.Active).SelectMany(x => x.SessionController).Where(x => x.ProcessId == pid).ToList().ForEach(x => { x.IsMuted = mute; unchanged = false; });
-			}
-		}
-		//while (unchanged)
-		//	foreach (MMDevice device in audio.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
-		//		for (int i = 0; i < device.AudioSessionManager.Sessions.Count; i++)
-		//			if (device.AudioSessionManager.Sessions[i].GetProcessID == pid)
-		//			{
-		//				device.AudioSessionManager.Sessions[i].SimpleAudioVolume.Mute = mute;
-		//				unchanged = false;
-		//			}
+		//int unchanged = 0;
+		//while (unchanged<audio.GetDevices(DeviceType.Playback, DeviceState.Active).Count())
+		//{
+		//	unchanged = 0;
+		//	audio.GetDevices(DeviceType.Playback, DeviceState.Active).SelectMany(x => x.SessionController).Where(x => x.ProcessId == pid).ToList().ForEach(x => { x.IsMuted = mute; unchanged++; });
+		//}
 
-		public void SetMute(IntPtr? hwnd = null)
+		public void MuteSession(bool? mute = null)
 		{
-			if (!啟用ToolStripMenuItem.Checked)
+			if (mute == null && !啟用ToolStripMenuItem.Checked)
 				return;
-			MuteSession(handle != (hwnd ?? GetForegroundWindow()));
+			//MuteSession(handle != (hwnd ?? GetForegroundWindow()));
+			if (GetWindowThreadProcessId(handle, out int pid) != 0)
+				foreach (MMDevice device in audio.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+					for (int i = 0; i < device.AudioSessionManager.Sessions.Count; i++)
+						if (device.AudioSessionManager.Sessions[i].GetProcessID == pid)
+							device.AudioSessionManager.Sessions[i].SimpleAudioVolume.Mute = mute ?? background;
 		}
 
 		public void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread,
 			uint dwmsEventTime)
-		{
-			SetMute(hwnd); // hwnd: handle to a window
+		{ // hwnd: handle to a window
+			handle = FindWindow(null, "原神");
+			if (!background || background && handle == hwnd) 
+			{
+				background = !background;
+				MuteSession(); 
+			}
 		}
 
 		public Form1()
@@ -107,10 +107,10 @@ namespace BGMuter
 
 		private void Form1_Load(object sender, EventArgs e)
         {
-			//client = new(this);
-			//audio.RegisterEndpointNotificationCallback(client);
-			observer = new(this);
-			audio.AudioDeviceChanged.Subscribe(observer);
+			client = new(this);
+			audio.RegisterEndpointNotificationCallback(client);
+			//observer = new(this);
+			//audio.AudioDeviceChanged.Subscribe(observer);
 			WinEventDelegate proc = new(WinEventProc);
 			gch = GCHandle.Alloc(proc);
 			eventhook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, IntPtr.Zero, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
