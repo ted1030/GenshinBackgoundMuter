@@ -93,8 +93,11 @@ namespace BGMuter
 			handle = FindWindow(null, "ньпл");
 			if (eventType == EVENT_SYSTEM_MINIMIZEEND)
 			{
-				background = false;
-				MuteSession();
+				if (handle == hwnd)
+				{
+					background = false;
+					MuteSession();
+				}
 			}
 			else
 			{
