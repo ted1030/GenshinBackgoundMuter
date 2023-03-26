@@ -55,13 +55,14 @@ namespace BGMuter
 			uint dwmsEventTime); // delegate: function pointer
 		const uint EVENT_SYSTEM_FOREGROUND = 0x3;
 		const uint EVENT_SYSTEM_MINIMIZEEND = 0x17;
+		const uint EVENT_SYSTEM_MINIMIZESTART = 0x16;
 		const uint WINEVENT_OUTOFCONTEXT = 0;
 		static MMDeviceEnumerator audio = new();
 		NotificationClient? client;
 		//static CoreAudioController audio = new();
 		//Observer? observer;
 		bool background = false;
-		IntPtr handle;
+		IntPtr handle = FindWindow(null, "原神");
 		IntPtr eventhook;
 		GCHandle gch;
 		RegistryKey? reg = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
@@ -77,7 +78,6 @@ namespace BGMuter
 		{
 			if (mute == null && !啟用ToolStripMenuItem.Checked)
 				return;
-			//MuteSession(handle != (hwnd ?? GetForegroundWindow()));
 			if (GetWindowThreadProcessId(handle, out int pid) != 0)
 				foreach (MMDevice device in audio.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
 					for (int i = 0; i < device.AudioSessionManager.Sessions.Count; i++)
@@ -87,37 +87,24 @@ namespace BGMuter
 
 		public void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread,
 			uint dwmsEventTime)
-		{ // hwnd: handle to a window
-			if (eventType != EVENT_SYSTEM_FOREGROUND && eventType != EVENT_SYSTEM_MINIMIZEEND)
+		{
+			// hwnd: the handle to the window
+			if (hwnd != handle || eventType != EVENT_SYSTEM_MINIMIZEEND && eventType != EVENT_SYSTEM_MINIMIZESTART)
 				return;
 			handle = FindWindow(null, "原神");
-			if (eventType == EVENT_SYSTEM_MINIMIZEEND)
-			{
-				if (handle == hwnd)
-				{
-					background = false;
-					MuteSession();
-				}
-			}
-			else
-			{
-				if (handle != hwnd)
-				{
-					background = true;
-					MuteSession();
-				}
-			}
+			background = eventType != EVENT_SYSTEM_MINIMIZEEND;
+			MuteSession();
 		}
 
 		public Form1()
-        {
-            InitializeComponent();
+		{
+			InitializeComponent();
 			Application.ApplicationExit += ApplicationExit;
-			
+
 		}
 
 		private void Form1_Load(object sender, EventArgs e)
-        {
+		{
 			client = new(this);
 			audio.RegisterEndpointNotificationCallback(client);
 			//observer = new(this);
@@ -130,13 +117,10 @@ namespace BGMuter
 				開機時啟動ToolStripMenuItem.Checked = true;
 		}
 
-		private void Form1_Shown(object sender, EventArgs e)
-		{
-			Hide();
-		}
+		private void Form1_Shown(object sender, EventArgs e) => Hide();
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-		{			
+		{
 			if (e.CloseReason == CloseReason.UserClosing)
 			{
 				Hide();
@@ -151,16 +135,13 @@ namespace BGMuter
 
 		private void 開機時啟動ToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
 		{
-			if (開機時啟動ToolStripMenuItem.Checked)		
+			if (開機時啟動ToolStripMenuItem.Checked)
 				reg?.SetValue("BGMuter", Application.ExecutablePath);
 			else
 				reg?.DeleteValue("BGMuter", false);
 		}
 
-		private void 離開ToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			Application.Exit();
-		}
+		private void 離開ToolStripMenuItem_Click(object sender, EventArgs e) => Application.Exit();
 
 		private void Form1_Resize(object sender, EventArgs e)
 		{
