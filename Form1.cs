@@ -100,7 +100,6 @@ namespace BGMuter
 		{
 			InitializeComponent();
 			Application.ApplicationExit += ApplicationExit;
-
 		}
 
 		private void Form1_Load(object sender, EventArgs e)
