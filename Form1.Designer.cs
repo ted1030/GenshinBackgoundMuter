@@ -37,6 +37,7 @@
 			this.開機時啟動ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.離開ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
+			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
 			this.contextMenuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -98,11 +99,20 @@
 			this.checkedListBox1.Size = new System.Drawing.Size(254, 246);
 			this.checkedListBox1.TabIndex = 1;
 			// 
+			// richTextBox1
+			// 
+			this.richTextBox1.Location = new System.Drawing.Point(295, 70);
+			this.richTextBox1.Name = "richTextBox1";
+			this.richTextBox1.Size = new System.Drawing.Size(164, 185);
+			this.richTextBox1.TabIndex = 2;
+			this.richTextBox1.Text = "";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 19F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(471, 272);
+			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this.checkedListBox1);
 			this.Controls.Add(this.label1);
 			this.MaximizeBox = false;
@@ -127,5 +137,6 @@
 		private ToolStripMenuItem 離開ToolStripMenuItem;
 		private ToolStripMenuItem 啟用ToolStripMenuItem;
 		private CheckedListBox checkedListBox1;
+        private RichTextBox richTextBox1;
     }
 }

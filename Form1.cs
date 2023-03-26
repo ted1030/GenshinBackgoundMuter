@@ -18,15 +18,11 @@ namespace BGMuter
 			{
 				form = form1;
 			}
-			void IMMNotificationClient.OnDeviceStateChanged(string deviceId, DeviceState newState) { }
+			void IMMNotificationClient.OnDeviceStateChanged(string deviceId, DeviceState newState) => form.MuteSession();
 			void IMMNotificationClient.OnDeviceAdded(string pwstrDeviceId) { }
 			void IMMNotificationClient.OnDeviceRemoved(string deviceId) { }
 			void IMMNotificationClient.OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
-			void IMMNotificationClient.OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
-			{
-				//if (defaultDeviceId != null)
-					form.MuteSession();
-			}
+			void IMMNotificationClient.OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId) => form.MuteSession();
 		}
 
 		//class Observer : IObserver<DeviceChangedArgs>
@@ -57,7 +53,8 @@ namespace BGMuter
 		static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
 		delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread,
 			uint dwmsEventTime); // delegate: function pointer
-		const uint EVENT_SYSTEM_FOREGROUND = 3;
+		const uint EVENT_SYSTEM_FOREGROUND = 0x3;
+		const uint EVENT_SYSTEM_MINIMIZEEND = 0x17;
 		const uint WINEVENT_OUTOFCONTEXT = 0;
 		static MMDeviceEnumerator audio = new();
 		NotificationClient? client;
@@ -91,11 +88,21 @@ namespace BGMuter
 		public void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread,
 			uint dwmsEventTime)
 		{ // hwnd: handle to a window
+			if (eventType != EVENT_SYSTEM_FOREGROUND && eventType != EVENT_SYSTEM_MINIMIZEEND)
+				return;
 			handle = FindWindow(null, "原神");
-			if (!background || background && handle == hwnd) 
+			if (eventType == EVENT_SYSTEM_MINIMIZEEND)
 			{
-				background = !background;
-				MuteSession(); 
+				background = false;
+				MuteSession();
+			}
+			else
+			{
+				if (handle != hwnd)
+				{
+					background = true;
+					MuteSession();
+				}
 			}
 		}
 
@@ -103,6 +110,7 @@ namespace BGMuter
         {
             InitializeComponent();
 			Application.ApplicationExit += ApplicationExit;
+			
 		}
 
 		private void Form1_Load(object sender, EventArgs e)
@@ -113,7 +121,7 @@ namespace BGMuter
 			//audio.AudioDeviceChanged.Subscribe(observer);
 			WinEventDelegate proc = new(WinEventProc);
 			gch = GCHandle.Alloc(proc);
-			eventhook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, IntPtr.Zero, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
+			eventhook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_MINIMIZEEND, IntPtr.Zero, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
 			啟用ToolStripMenuItem.Checked = true;
 			if (reg?.GetValue("BGMuter") != null)
 				開機時啟動ToolStripMenuItem.Checked = true;
@@ -125,7 +133,7 @@ namespace BGMuter
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-		{
+		{			
 			if (e.CloseReason == CloseReason.UserClosing)
 			{
 				Hide();
