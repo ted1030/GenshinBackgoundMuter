@@ -35,9 +35,6 @@
 			啟用ToolStripMenuItem = new ToolStripMenuItem();
 			開機時啟動ToolStripMenuItem = new ToolStripMenuItem();
 			離開ToolStripMenuItem = new ToolStripMenuItem();
-			label1 = new Label();
-			richTextBox1 = new RichTextBox();
-			checkedListBox1 = new CheckedListBox();
 			contextMenuStrip1.SuspendLayout();
 			SuspendLayout();
 			// 
@@ -79,39 +76,11 @@
 			離開ToolStripMenuItem.Text = "離開";
 			離開ToolStripMenuItem.Click += 離開ToolStripMenuItem_Click;
 			// 
-			// label1
-			// 
-			label1.AutoSize = true;
-			label1.Location = new Point(344, 24);
-			label1.Name = "label1";
-			label1.Size = new Size(51, 19);
-			label1.TabIndex = 0;
-			label1.Text = "label1";
-			// 
-			// richTextBox1
-			// 
-			richTextBox1.Location = new Point(295, 70);
-			richTextBox1.Name = "richTextBox1";
-			richTextBox1.Size = new Size(164, 185);
-			richTextBox1.TabIndex = 2;
-			richTextBox1.Text = "";
-			// 
-			// checkedListBox1
-			// 
-			checkedListBox1.FormattingEnabled = true;
-			checkedListBox1.Location = new Point(12, 9);
-			checkedListBox1.Name = "checkedListBox1";
-			checkedListBox1.Size = new Size(254, 246);
-			checkedListBox1.TabIndex = 1;
-			// 
 			// Form1
 			// 
 			AutoScaleDimensions = new SizeF(9F, 19F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(471, 272);
-			Controls.Add(richTextBox1);
-			Controls.Add(checkedListBox1);
-			Controls.Add(label1);
+			ClientSize = new Size(279, 108);
 			MaximizeBox = false;
 			Name = "Form1";
 			ShowInTaskbar = false;
@@ -123,7 +92,6 @@
 			Resize += Form1_Resize;
 			contextMenuStrip1.ResumeLayout(false);
 			ResumeLayout(false);
-			PerformLayout();
 		}
 
 		#endregion
@@ -132,8 +100,5 @@
 		private ToolStripMenuItem 開機時啟動ToolStripMenuItem;
 		private ToolStripMenuItem 離開ToolStripMenuItem;
 		private ToolStripMenuItem 啟用ToolStripMenuItem;
-		private Label label1;
-		private RichTextBox richTextBox1;
-		private CheckedListBox checkedListBox1;
 	}
 }
